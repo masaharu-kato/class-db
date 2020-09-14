@@ -3,6 +3,8 @@ import db.dbtypes as dbt
 
 from typing import Optional, List
 
+
+
 class ItemName(dbs.UniqueTable):
     """ """
     name: dbt.VarChar(128)
