@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from db import dbtypes
 
-from typing import Dict
+from typing import Dict, Sequence, Tuple, Union
 
 
 @dataclass
@@ -52,3 +52,44 @@ class Table:
 class SchemaData:
     """ Schema data class """
     tables:Dict[str, Table]
+
+
+
+class ColsToGet:
+    """ Configuration of column loading in table """
+    def __init__(self,
+        table:Table,
+        _all:bool = False,
+        **col_configs:Union[bool, 'ColsToGet'],
+    ):
+        """ Make configuration of column loading in table
+            Set `_all` argument to `True` to get all columns (except linked other tables' columns).
+            Use keyword arguments (keyword refers to column name) to specify individually.
+            If `_all` are set to `True` and keyword argument(s) are set to `False`,
+            get all columns except the column(s) specified in the keyword argument(s).
+            In the case of columns which links to another table, specify ColsToGet recursively.
+
+            Example (Assume `user` column links to `User` table):
+            ColsToGet(True) : Load all columns
+            ColsToGet(id=True, name=True) : Load `id` column and `name` column
+            ColsToGet(True, name=False) : Load all columns except `name` column
+            ColsToGet(user=ColsToGet(True)) : Load all columns in the `User` table
+            ColsToGet(id=True, user=ColsToGet(id=True, name=True))
+                 : Load `id` column, and `id` and `name` columns in the `User` table
+
+        """
+        target_colnames:Dict[str, Union[bool, Dict]] = {}
+        if _all:
+            for colname in table.columns:
+                if not (colname in col_configs and not col_configs[colname]):
+                    target_colnames[colname] = col_configs[colname]
+        else:
+            for colname in table.columns:
+                if colname in col_configs and col_configs[colname]:
+                    target_colnames[colname] = col_configs[colname]
+
+        
+
+
+        self.col_configs = col_configs
+
